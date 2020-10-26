@@ -46,6 +46,7 @@ jobs:
           name: frontend-test
           command: |
             cd frontend
+            npm login
             #npm run start
             npm run test
       - save_cache:
