@@ -62,8 +62,6 @@ jobs:
           name: backend-test
           command: |
             cd backend
-            cp -p .env.sample .env
-            npm run start
             npm run test
       - save_cache:
           paths: [backend/test_modules]

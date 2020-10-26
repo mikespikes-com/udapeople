@@ -77,7 +77,7 @@ jobs:
       - run:
           name: frontend-test
           command: |
-            npm run start
+            cd frontend
             npm run test
       - save_cache:
           paths: [frontend/test_modules]
@@ -93,7 +93,7 @@ jobs:
       - run:
           name: backend-test
           command: |
-            npm run start
+            cd backend
             npm run test
       - save_cache:
           paths: [backend/test_modules]
@@ -101,23 +101,39 @@ jobs:
             
   scan-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-
+      - checkout 
+      - restore_cache:
+          keys: [frontend-test]
+      - run:
+          name: scan-frontend
+          commands: |
+            cd frontend
+            npm audit --audit-level=critical
+      - save_cache:
+          paths: [frontend/scans]
+          key: frontend-scan
+            
   scan-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout 
+      - restore_cache:
+          keys: [backend-test]
+      - run:
+          name: scan-backend
+          commands: |
+            cd backend
+            npm audit --audit-level=critical
+      - save_cache:
+          paths: [backend/scans]
+          key: backend-scan
 
   deploy-infrastructure:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
     steps:
       # Checkout code from git
       - run:
