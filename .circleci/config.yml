@@ -1,8 +1,9 @@
 version: 2.1
-          
-node-executor:
-docker:
-  - image: circleci/node:13.8.0
+
+executors:
+  node-executor:
+    docker:
+      - image: circleci/node:13.8.0
 
 jobs:
   build-frontend:
