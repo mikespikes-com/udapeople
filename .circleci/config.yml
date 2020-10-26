@@ -1,9 +1,12 @@
 version: 2.1
           
+node-executor:
+docker:
+  - image: circleci/node:13.8.0
+
 jobs:
   build-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout
       - restore_cache:
@@ -14,13 +17,13 @@ jobs:
             cd frontend
             npm install
             npm run build
-      - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build-V2
+      - persist_to_workspace:
+          root: ~/
+          paths: 
+            - frontend/node_modules
 
   build-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout
       - restore_cache:
@@ -31,49 +34,49 @@ jobs:
             cd backend
             npm install
             npm run build
-      - save_cache:
-          paths: [backend/node_modules]
-          key: backend-build-V2
+      - persist_to_workspace:
+          root: ~/
+          paths: 
+            - backend/node_modules
 
   test-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build-V2]
+      - attach_workspace:
+          at: frontend/node_modules
       - run:
           name: frontend-test
           command: |
             cd frontend
             npm run test
-      - save_cache:
-          paths: [frontend/tested_modules-V2]
-          key: frontend-tested-V2
+      - persist_to_workspace:
+          root: ~/
+          paths: 
+            - frontend/node_modules
       
   test-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout 
-      - restore_cache:
-          keys: [backend-build-V2]
+      - attach_workspace:
+          at: backend/node_modules
       - run:
           name: backend-test
           command: |
             cd backend
             npm run test
-      - save_cache:
-          paths: [backend/tested_modules-V2]
-          key: backend-tested-V2
+      - persist_to_workspace:
+          root: ~/
+          paths: 
+            - backend/node_modules
 
   scan-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout 
-      - restore_cache:
-          keys: [frontend-tested-V2]
+      - attach_workspace:
+          at: frontend/node_modules
       - run:
           name: scan-frontend
           command: |
@@ -84,12 +87,11 @@ jobs:
           key: frontend-scanned
               
   scan-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    executor: node-executor
     steps:
       - checkout 
-      - restore_cache:
-          keys: [backend-test-V2]
+      - attach_workspace:
+          at: backend/node_modules
       - run:
           name: scan-backend
           command: |
