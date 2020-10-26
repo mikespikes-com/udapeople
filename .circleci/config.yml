@@ -19,7 +19,7 @@ jobs:
             npm install
             npm run build
       - persist_to_workspace:
-          root: ~/
+          root: ~/project
           paths: 
             - frontend/node_modules
 
@@ -36,7 +36,7 @@ jobs:
             npm install
             npm run build
       - persist_to_workspace:
-          root: ~/
+          root: ~/project
           paths: 
             - backend/node_modules
 
@@ -52,7 +52,7 @@ jobs:
             cd frontend
             npm run test
       - persist_to_workspace:
-          root: ~/
+          root: ~/project
           paths: 
             - frontend/node_modules
       
@@ -68,7 +68,7 @@ jobs:
             cd backend
             npm run test
       - persist_to_workspace:
-          root: ~/
+          root: ~/project
           paths: 
             - backend/node_modules
 
