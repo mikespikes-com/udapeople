@@ -13,7 +13,6 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm start
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
@@ -32,10 +31,7 @@ jobs:
             cd backend
             npm login
             npm install
-            npm run start:dev
-            npm run webpack
-            npm run start:hmr
-            npm run start:prod
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
