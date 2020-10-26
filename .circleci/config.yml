@@ -6,8 +6,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      #- restore_cache:
-      #    keys: [frontend-build]
+      - restore_cache:
+          keys: [frontend-build-V2]
       - run:
           name: Build front-end
           command: |
@@ -24,7 +24,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [backend-build-V2]
       - run:
           name: Back-end build
           command: |
@@ -33,7 +33,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build
+          key: backend-build-V2
 
   test-frontend:
     docker:
@@ -48,8 +48,8 @@ jobs:
             cd frontend
             npm run test
       - save_cache:
-          paths: [frontend/test_modules]
-          key: frontend-test
+          paths: [frontend/tested_modules-V2]
+          key: frontend-tested-V2
       
   test-backend:
     docker:
@@ -57,15 +57,15 @@ jobs:
     steps:
       - checkout 
       - restore_cache:
-          keys: [backend-build]
+          keys: [backend-build-V2]
       - run:
           name: backend-test
           command: |
             cd backend
             npm run test
       - save_cache:
-          paths: [backend/test_modules]
-          key: backend-test
+          paths: [backend/tested_modules-V2]
+          key: backend-tested-V2
 
   scan-frontend:
     docker:
@@ -73,15 +73,15 @@ jobs:
     steps:
       - checkout 
       - restore_cache:
-          keys: [frontend-test]
+          keys: [frontend-tested-V2]
       - run:
           name: scan-frontend
           command: |
             cd frontend
             npm audit --audit-level=critical
       - save_cache:
-          paths: [frontend/scans]
-          key: frontend-scan
+          paths: [frontend/scanned_modules]
+          key: frontend-scanned
               
   scan-backend:
     docker:
@@ -89,15 +89,15 @@ jobs:
     steps:
       - checkout 
       - restore_cache:
-          keys: [backend-test]
+          keys: [backend-test-V2]
       - run:
           name: scan-backend
           command: |
             cd backend
             npm audit --audit-level=critical
       - save_cache:
-          paths: [backend/scans]
-          key: backend-scan
+          paths: [backend/scanmed_modules]
+          key: backend-scannned
 
 ###
 workflows:
@@ -110,6 +110,6 @@ workflows:
       - test-backend:
           requires: [build-backend]
       - scan-backend:
-          requires: [build-backend]
+          requires: [test-backend]
       - scan-frontend:
-          requires: [build-frontend]
+          requires: [test-frontend]
