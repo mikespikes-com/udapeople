@@ -18,10 +18,9 @@ jobs:
             cd frontend
             npm install
             npm run build
-      - persist_to_workspace:
-          root: ~/project
-          paths: 
-            - frontend/node_modules
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build-V2
 
   build-backend:
     executor: node-executor
@@ -35,72 +34,57 @@ jobs:
             cd backend
             npm install
             npm run build
-      - persist_to_workspace:
-          root: ~/project
-          paths: 
-            - backend/node_modules
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build-V2
 
   test-frontend:
     executor: node-executor
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/frontend/node_modules
+      - restore_cache:
+          keys: [frontend-build-V2]
       - run:
           name: frontend-test
           command: |
             cd frontend
             npm run test
-      - persist_to_workspace:
-          root: ~/project
-          paths: 
-            - frontend/node_modules
-      
+
   test-backend:
     executor: node-executor
     steps:
       - checkout 
-      - attach_workspace:
-          at: ~/backend/node_modules
+      - restore_cache:
+          keys: [backend-build-V2]
       - run:
           name: backend-test
           command: |
             cd backend
             npm run test
-      - persist_to_workspace:
-          root: ~/project
-          paths: 
-            - backend/node_modules
 
   scan-frontend:
     executor: node-executor
     steps:
       - checkout 
-      - attach_workspace:
-          at: frontend/node_modules
+      - restore_cache:
+          keys: [frontend-build-V2]
       - run:
           name: scan-frontend
           command: |
             cd frontend
             npm audit --audit-level=critical
-      - save_cache:
-          paths: [frontend/scanned_modules]
-          key: frontend-scanned
               
   scan-backend:
     executor: node-executor
     steps:
       - checkout 
-      - attach_workspace:
-          at: backend/node_modules
+      - restore_cache:
+          keys: [backend-build-V2]
       - run:
           name: scan-backend
           command: |
             cd backend
             npm audit --audit-level=critical
-      - save_cache:
-          paths: [backend/scanmed_modules]
-          key: backend-scannned
 
 ###
 workflows:
