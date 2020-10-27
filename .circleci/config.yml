@@ -20,7 +20,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-{{ checksum "packagelock.json" }}
+          key: frontend-build-{{ checksum "package-lock.json" }}
 
   build-backend:
     executor: node-executor
@@ -36,7 +36,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-{{ checksum "packagelock.json" }}
+          key: backend-build-{{ checksum "package-lock.json" }}
 
   test-frontend:
     executor: node-executor
