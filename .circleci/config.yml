@@ -77,8 +77,6 @@ jobs:
           command: |
             cd frontend
             npm audit fix --audit-level=critical
-      - when:
-          on_fail:
               
   scan-backend:
     executor: node-executor
@@ -102,9 +100,6 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
-          when: 
-            on_fail:
-
       - scan-backend:
           requires: [build-backend]
       - scan-frontend:
