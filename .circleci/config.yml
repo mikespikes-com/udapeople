@@ -50,7 +50,7 @@ jobs:
             cd frontend
             npm run test
       - store_test_results:
-          path: ./unit_tests
+          path: ./frontend/unit_tests
 
   test-backend:
     executor: node-executor
@@ -64,7 +64,7 @@ jobs:
             cd backend
             npm run test
       - store_test_results:
-          path: ./unit_tests  
+          path: ./backend/unit_tests  
 
   scan-frontend:
     executor: node-executor
@@ -101,6 +101,6 @@ workflows:
       - test-backend:
           requires: [build-backend]
       - scan-backend:
-          requires: [test-backend]
+          requires: [build-backend]
       - scan-frontend:
-          requires: [test-frontend]
+          requires: [build-frontend]
