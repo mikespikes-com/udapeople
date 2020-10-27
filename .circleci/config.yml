@@ -45,7 +45,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: frontend/node_modules
+          at: ~/frontend/node_modules
       - run:
           name: frontend-test
           command: |
@@ -61,7 +61,7 @@ jobs:
     steps:
       - checkout 
       - attach_workspace:
-          at: backend/node_modules
+          at: ~/backend/node_modules
       - run:
           name: backend-test
           command: |
