@@ -50,7 +50,7 @@ jobs:
             cd frontend
             npm run test
       - store_test_results:
-          path: ./frontend/unit_tests
+          path: ./frontend/
 
   test-backend:
     executor: node-executor
@@ -64,7 +64,7 @@ jobs:
             cd backend
             npm run test
       - store_test_results:
-          path: ./backend/unit_tests  
+          path: ./backend/
 
   scan-frontend:
     executor: node-executor
@@ -76,7 +76,9 @@ jobs:
           name: scan-frontend
           command: |
             cd frontend
-            npm audit --audit-level=critical
+            npm audit fix --audit-level=critical
+      - when:
+          on_fail:
               
   scan-backend:
     executor: node-executor
@@ -88,7 +90,7 @@ jobs:
           name: scan-backend
           command: |
             cd backend
-            npm audit --audit-level=critical
+            npm audit fix --audit-level=critical
 
 ###
 workflows:
@@ -100,6 +102,9 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
+          when: 
+            on_fail:
+
       - scan-backend:
           requires: [build-backend]
       - scan-frontend:
