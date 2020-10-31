@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@4.1.1
+
 executors:
   node-executor:
     docker:
@@ -21,6 +24,10 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build-{{ checksum "package-lock.json" }}
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
 
   build-backend:
     executor: node-executor
@@ -37,6 +44,11 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build-{{ checksum "package-lock.json" }}
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
+
 
   test-frontend:
     executor: node-executor
@@ -51,6 +63,10 @@ jobs:
             npm run test
       - store_test_results:
           path: ./frontend/
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
 
   test-backend:
     executor: node-executor
@@ -65,7 +81,11 @@ jobs:
             npm run test
       - store_test_results:
           path: ./backend/
-
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
+        
   scan-frontend:
     executor: node-executor
     steps:
@@ -77,7 +97,11 @@ jobs:
           command: |
             cd frontend
             npm audit fix --audit-level=critical
-              
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
+                    
   scan-backend:
     executor: node-executor
     steps:
@@ -89,7 +113,10 @@ jobs:
           command: |
             cd backend
             npm audit fix --audit-level=critical
-
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
 ###
 workflows:
   default:
