@@ -8,9 +8,6 @@ executors:
   node-executor:
     docker:
       - image: circleci/node:13.8.0
-  aws-executor:
-    docker:
-      - image: aws-cli/default
   ansible-executor:
     docker:
       - image: python:3.7-alpine3.11
@@ -183,9 +180,11 @@ jobs:
           template: basic_fail_1
 
   deploy-infrastructure:
-    executor: aws-executor
+    executor: aws-cli/default
     steps:
       - checkout
+      - aws-cli/setup:
+          profile-name: default
       - aws-cf-deploy:
           cf-template: "backend.yml"
           project-tag: udapeople-backend
