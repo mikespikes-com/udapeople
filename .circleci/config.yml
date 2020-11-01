@@ -55,9 +55,9 @@ commands:
       - run:
           command: | 
             aws cloudformation deploy \
-            --template-file .circleci/files/<<parameters.cftemplate>> \
-            --tags project=<<parameters.projecttag>> \
-            --stack-name "<<parameters.stackname>>-${CIRCLE_WORKFLOW_ID}" \
+            --template-file .circleci/files/<<parameters.cf-template>> \
+            --tags project=<<parameters.project-tag>> \
+            --stack-name "<<parameters.stack-name>>-${CIRCLE_WORKFLOW_ID}" \
             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
   save-to-memstash:
     parameters:
