@@ -9,7 +9,7 @@ executors:
       - image: circleci/node:13.8.0
   aws-executor:
     docker:
-      - image: circleci/awscli
+      - image: circleci/aws-cli
   ansible-executor:
     docker:
       - image: python:3.7-alpine3.11
