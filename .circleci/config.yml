@@ -45,19 +45,19 @@ commands:
             npm audit fix --audit-level=critical
   aws-cf-deploy:
     parameters:
-      cftemplate:
+      cf-template:
         type: string
-      projecttag:
+      project-tag:
         type: string
-      stackname:
+      stack-name:
         type: string
     steps:
       - run:
           command: | 
             aws cloudformation deploy \
-            --template-file .circleci/files/<<parameter.cftemplate>> \
-            --tags project=<<parameter.projecttag>> \
-            --stack-name "<<parameter.stackname>>-${CIRCLE_WORKFLOW_ID}" \
+            --template-file .circleci/files/<<parameters.cftemplate>> \
+            --tags project=<<parameters.projecttag>> \
+            --stack-name "<<parameters.stackname>>-${CIRCLE_WORKFLOW_ID}" \
             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
   save-to-memstash:
     parameters:
@@ -73,8 +73,8 @@ commands:
           command: |
             URL="aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicDNSName' \
-            --filters "Name=tag:project,Values=<<parameter.project-tag>>"
-            curl -H "Content-Type: text/plain" -H "token:<<parameter.token>>" --request PUT --data "${URL}" https://api.memstash.io/values/<<parameter.key>>${CIRCLE_WORKFLOW_ID}
+            --filters "Name=tag:project,Values=<<parameters.project-tag>>"
+            curl -H "Content-Type: text/plain" -H "token:<<parameters.token>>" --request PUT --data "${URL}" https://api.memstash.io/values/<<parameters.key>>${CIRCLE_WORKFLOW_ID}
   save-ansible-inventory:
     parameters:
       project-tag:
@@ -84,7 +84,7 @@ commands:
           command: |
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:project,Values=<<parameter.project-tag>>" \
+            --filters "Name=tag:project,Values=<<parameters.project-tag>>" \
             --output text >> ansible/inventory.txt
   #rollback-deploy:
   #  parameters:
@@ -186,16 +186,16 @@ jobs:
     steps:
       - checkout
       - aws-cf-deploy:
-          cftemplate: "backend.yml"
-          projecttag: udapeople-backend
-          stackname: udapeople-backend
+          cf-template: "backend.yml"
+          project-tag: udapeople-backend
+          stack-name: udapeople-backend
       - save-to-memstash:
           project-tag: udapeople-backend
           key: backend-url
       - aws-cf-deploy:
-          cftemplate: "frontend.yml"
-          projecttag: udapeople-frontend
-          stackname: udapeople-frontend
+          cf-template: "frontend.yml"
+          project-tag: udapeople-frontend
+          stack-name: udapeople-frontend
       - save-ansible-inventory:
           project-tag: udapeople-backend
       - persist_to_workspace:
