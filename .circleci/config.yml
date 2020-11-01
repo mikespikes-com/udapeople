@@ -69,10 +69,8 @@ commands:
     steps:
       - run:
           command: |
-            URL=$("aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicDNSName' \
-            --filters "Name=tag:project,Values=<<parameters.project-tag>>")
-            curl -H "Content-Type: text/plain" -H "token:<<parameters.token>>" --request PUT --data "${URL}" https://api.memstash.io/values/<<parameters.key>>${CIRCLE_WORKFLOW_ID}
+            URL=$("aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDNSName' --filters "Name=tag:project,Values=<<parameters.project-tag>>")
+            curl -H "Content-Type: text/plain" -H "token:<<parameters.token>>" --request PUT --data ${URL} https://api.memstash.io/values/<<parameters.key>>${CIRCLE_WORKFLOW_ID}
   save-ansible-inventory:
     parameters:
       project-tag:
