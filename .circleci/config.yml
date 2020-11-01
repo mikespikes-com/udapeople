@@ -44,7 +44,7 @@ commands:
             npm audit fix --audit-level=critical
   aws-cf-deploy:
     parameters:
-      template:
+      cftemplate:
         type: string
       project-tag:
         type: string
@@ -54,7 +54,7 @@ commands:
       - run:
           command: | 
             aws cloudformation deploy \
-            --template-file .circleci/files/<<parameter.template>> \
+            --template-file .circleci/files/<<parameter.cftemplate>> \
             --tags project=<<parameter.project-tag>> \
             --stack-name "<<parameter.stack-name>>-${CIRCLE_WORKFLOW_ID}" \
             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
@@ -185,14 +185,14 @@ jobs:
     steps:
       - checkout
       - aws-cf-deploy:
-          template: "backend.yml"
+          cftemplate: "backend.yml"
           project-tag: udapeople-backend
           stack-name: udapeople-backend
       - save-to-memstash:
           project-tag: udapeople-backend
           key: backend-url
       - aws-cf-deploy:
-          template: "frontend.yml"
+          cftemplate: "frontend.yml"
           project-tag: udapeople-frontend
           stack-name: udapeople-frontend
       - save-ansible-inventory:
