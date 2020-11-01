@@ -10,6 +10,9 @@ executors:
   aws-executor:
     docker:
       - image: circleci/awscli
+  ansible-executor:
+    docker:
+      - image: python:3.7-alpine3.11
 commands:
   npm-install:
     parameters:
@@ -28,7 +31,6 @@ commands:
     steps:
       - run:
           command: |
-            mkdir test-results
             cd <<parameters.dir>>
             npm run test
   run-scans:
@@ -40,6 +42,54 @@ commands:
           command: |
             cd <<parameters.dir>>
             npm audit fix --audit-level=critical
+  aws-cf-deploy:
+    parameters:
+      template:
+        type: string
+      project-tag:
+        type: string
+      stack-name:
+        type: string
+    steps:
+      - run:
+          command: | 
+            aws cloudformation deploy \
+            --template-file .circleci/files/<<parameter.template>> \
+            --tags project=<<parameter.project-tag>> \
+            --stack-name "<<parameter.stack-name>>-${CIRCLE_WORKFLOW_ID}" \
+            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+  save-to-memstash:
+    parameters:
+      project-tag:
+        type: string
+      token:
+        type: string
+        default: "d84673bf-8716-435c-960f-04b758497ede"
+      key:
+        type: string
+    steps:
+      - run:
+          command: |
+            URL="aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicDNSName' \
+            --filters "Name=tag:project,Values=<<parameter.project-tag>>"
+            curl -H "Content-Type: text/plain" -H "token:<<parameter.token>>" --request PUT --data "${URL}" https://api.memstash.io/values/<<parameter.key>>${CIRCLE_WORKFLOW_ID}
+  save-ansible-inventory:
+    parameters:
+      project-tag:
+        type: string
+    steps:
+      - run:
+          command: |
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:project,Values=<<parameter.project-tag>>" \
+            --output text >> ansible/inventory.txt
+  #rollback-deploy:
+  #  parameters:
+  #  steps:
+  #    - run:
+  #        command: |
 
 jobs:
   build-frontend:
@@ -83,7 +133,7 @@ jobs:
       - run-test:
           dir: frontend
       - store_test_results:
-          path: ./test-results/
+          path: ./frontend/
       - slack/notify:
           channel: udacity
           event: fail
@@ -98,7 +148,7 @@ jobs:
       - run-test:
           dir: backend
       - store_test_results:
-          path: ./test-results/
+          path: ./backend/
       - slack/notify:
           channel: udacity
           event: fail
@@ -129,6 +179,36 @@ jobs:
           channel: udacity
           event: fail
           template: basic_fail_1
+
+  deploy-infrastructure:
+    executor: aws-executor
+    steps:
+      - checkout
+      - aws-cf-deploy:
+          name: deploy back-end
+          template: backend.yml
+          project-tag: udapeople-backend
+          stack-name: udapeople-backend
+      - save-to-memstash:
+          project-tag: udapeople-backend
+          key: backend-url
+      - aws-cf-deploy:
+          name: deploy front-end
+          template: frontend.yml
+          project-tag: udapeople-frontend
+          stack-name: udapeople-frontend
+      - save-ansible-inventory:
+          project-tag: udapeople-backend
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
+      # Here's where you will add some code to rollback on failure
+
 ###
 workflows:
   default:

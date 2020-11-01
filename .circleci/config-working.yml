@@ -10,6 +10,9 @@ executors:
   aws-executor:
     docker:
       - image: circleci/awscli
+  ansible-executor:
+    docker:
+      - image: python:3.7-alpine3.11
 commands:
   npm-install:
     parameters:
@@ -39,6 +42,54 @@ commands:
           command: |
             cd <<parameters.dir>>
             npm audit fix --audit-level=critical
+  aws-cf-deploy:
+    parameters:
+      template:
+        type: string
+      project-tag:
+        type: string
+      stack-name:
+        type: string
+    steps:
+      - run:
+          command: | 
+            aws cloudformation deploy \
+            --template-file .circleci/files/<<parameter.template>> \
+            --tags project=<<parameter.project-tag>> \
+            --stack-name "<<parameter.stack-name>>-${CIRCLE_WORKFLOW_ID}" \
+            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+  save-to-memstash:
+    parameters:
+      project-tag:
+        type: string
+      token:
+        type: string
+        default: "d84673bf-8716-435c-960f-04b758497ede"
+      key:
+        type: string
+    steps:
+      - run:
+          command: |
+            URL="aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicDNSName' \
+            --filters "Name=tag:project,Values=<<parameter.project-tag>>"
+            curl -H "Content-Type: text/plain" -H "token:<<parameter.token>>" --request PUT --data "${URL}" https://api.memstash.io/values/<<parameter.key>>${CIRCLE_WORKFLOW_ID}
+  save-ansible-inventory:
+    parameters:
+      project-tag:
+        type: string
+    steps:
+      - run:
+          command: |
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:project,Values=<<parameter.project-tag>>" \
+            --output text >> ansible/inventory.txt
+  #rollback-deploy:
+  #  parameters:
+  #  steps:
+  #    - run:
+  #        command: |
 
 jobs:
   build-frontend:
@@ -133,36 +184,21 @@ jobs:
     executor: aws-executor
     steps:
       - checkout
-      - run:
-          name: Ensure back-end infrastructure exists
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/backend.yml \
-              --tags project=udapeople-backend \
-              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
-      - run:
-          name: Save backend-url to memstash
-          command: |
-              BE_URL="aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicDNSName' \
-              --filters "Name=tag:project,Values=udapeople-backend"
-              curl -H "Content-Type: text/plain" -H "token: d84673bf-8716-435c-960f-04b758497ede" --request PUT --data "${BE_URL}" https://api.memstash.io/values/backend-url${CIRCLE_WORKFLOW_ID}
-      - run:
-          name: Ensure front-end infrastructure exist
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople-frontend \
-              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}" \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:project,Values=udapeople-backend" \
-            --output text >> ansible/inventory.txt
+      - aws-cf-deploy:
+          name: deploy back-end
+          template: backend.yml
+          project-tag: udapeople-backend
+          stack-name: udapeople-backend
+      - save-to-memstash:
+          project-tag: udapeople-backend
+          key: backend-url
+      - aws-cf-deploy:
+          name: deploy front-end
+          template: frontend.yml
+          project-tag: udapeople-frontend
+          stack-name: udapeople-frontend
+      - save-ansible-inventory:
+          project-tag: udapeople-backend
       - persist_to_workspace:
           root: ~/
           paths:
@@ -177,18 +213,19 @@ jobs:
     executor: ansible-executor
     steps:
       - checkout
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - add_ssh_keys:
+          fingerprints: 
+            - "ea:0f:46:47:06:c9:e0:3d:d0:df:e3:1f:51:29:4d:21"
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            apk add --update ansible
       - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
+            ansible-playbook -i inventory.txt playbook.yml
       # Here's where you will add some code to rollback on failure      
 
 ###
