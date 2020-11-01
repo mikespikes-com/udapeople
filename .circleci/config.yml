@@ -44,6 +44,8 @@ commands:
             npm audit fix --audit-level=critical
   aws-cf-deploy:
     parameters:
+      name:
+        type: string
       template:
         type: string
       project-tag:
@@ -185,16 +187,16 @@ jobs:
     steps:
       - checkout
       - aws-cf-deploy:
-          name: deploy back-end
-          template: backend.yml
+          name: "deploy back-end"
+          template: "backend.yml"
           project-tag: udapeople-backend
           stack-name: udapeople-backend
       - save-to-memstash:
           project-tag: udapeople-backend
           key: backend-url
       - aws-cf-deploy:
-          name: deploy front-end
-          template: frontend.yml
+          name: "deploy front-end"
+          template: "frontend.yml"
           project-tag: udapeople-frontend
           stack-name: udapeople-frontend
       - save-ansible-inventory:
