@@ -128,6 +128,69 @@ jobs:
           channel: udacity
           event: fail
           template: basic_fail_1
+
+  deploy-infrastructure:
+    executor: aws-executor
+    steps:
+      - checkout
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=udapeople-backend \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+      - run:
+          name: Save backend-url to memstash
+          command: |
+              BE_URL="aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicDNSName' \
+              --filters "Name=tag:project,Values=udapeople-backend"
+              curl -H "Content-Type: text/plain" -H "token: d84673bf-8716-435c-960f-04b758497ede" --request PUT --data "${BE_URL}" https://api.memstash.io/values/backend-url${CIRCLE_WORKFLOW_ID}
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople-frontend \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}" \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:project,Values=udapeople-backend" \
+            --output text >> ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      - slack/notify:
+          channel: udacity
+          event: fail
+          template: basic_fail_1
+      # Here's where you will add some code to rollback on failure
+
+  configure-infrastructure:
+    executor: ansible-executor
+    steps:
+      - checkout
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure      
+
 ###
 workflows:
   default:
