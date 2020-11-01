@@ -13,6 +13,7 @@ executors:
   ansible-executor:
     docker:
       - image: python:3.7-alpine3.11
+
 commands:
   npm-install:
     parameters:
@@ -46,17 +47,17 @@ commands:
     parameters:
       cftemplate:
         type: string
-      project-tag:
+      projecttag:
         type: string
-      stack-name:
+      stackname:
         type: string
     steps:
       - run:
           command: | 
             aws cloudformation deploy \
             --template-file .circleci/files/<<parameter.cftemplate>> \
-            --tags project=<<parameter.project-tag>> \
-            --stack-name "<<parameter.stack-name>>-${CIRCLE_WORKFLOW_ID}" \
+            --tags project=<<parameter.projecttag>> \
+            --stack-name "<<parameter.stackname>>-${CIRCLE_WORKFLOW_ID}" \
             --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
   save-to-memstash:
     parameters:
@@ -186,15 +187,15 @@ jobs:
       - checkout
       - aws-cf-deploy:
           cftemplate: "backend.yml"
-          project-tag: udapeople-backend
-          stack-name: udapeople-backend
+          projecttag: udapeople-backend
+          stackname: udapeople-backend
       - save-to-memstash:
           project-tag: udapeople-backend
           key: backend-url
       - aws-cf-deploy:
           cftemplate: "frontend.yml"
-          project-tag: udapeople-frontend
-          stack-name: udapeople-frontend
+          projecttag: udapeople-frontend
+          stackname: udapeople-frontend
       - save-ansible-inventory:
           project-tag: udapeople-backend
       - persist_to_workspace:
